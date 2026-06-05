@@ -58,12 +58,11 @@ function HiveArm() {
     setLog((l) => [...l.slice(-40), `[${new Date().toLocaleTimeString()}] ${msg}`]);
 
   const sendCommand = (servoIdx: number, angle: number) => {
-    const s = socketRef.current;
-    if (s && s.readyState === WebSocket.OPEN) {
-      const sentAngle = servoIdx === 2 ? -angle - 31 : angle;
-      s.send(`${servoIdx},${sentAngle}`);
-    }
-  };
+  const s = socketRef.current;
+  if (s && s.readyState === WebSocket.OPEN) {
+    s.send(`${servoIdx},${angle}`);
+  }
+};
 
   const update = (key: keyof ArmState, val: number) => {
     setState((p) => ({ ...p, [key]: val }));
@@ -85,9 +84,7 @@ function HiveArm() {
       ws.onmessage = (e) => {
         try {
           const data = JSON.parse(e.data);
-          if (data.elbow !== undefined) {
-            data.elbow = -data.elbow - 31;
-          }
+          // Directly apply received telemetry without transformation
           setState((p) => ({ ...p, ...data }));
         } catch {
           pushLog(`◀ ${e.data}`);
