@@ -24,6 +24,12 @@ bool wsConnected = false;
 unsigned long lastWsReconnectAttempt = 0;
 const unsigned long wsReconnectInterval = 5000;
 
+// Current Cloudflare certificate SHA-1 fingerprint (space-separated)
+// NOTE: Fingerprints expire when the server SSL certificate rotates (usually every 90 days).
+// To avoid needing this fingerprint, please update the "WebSockets" library by Links2004
+// to the latest version in the Arduino IDE Library Manager, then you can use `webSocket.setInsecure();`.
+const char* sslFingerprint = "DA F0 D6 BA 59 43 E4 EB ED 99 A7 49 1D 47 DE 62 66 FA 24 B5";
+
 // --- PCA9685 Servo Driver ---
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver(0x40);
 #define SERVO_FREQ 50 // Standard servo frequency
@@ -241,13 +247,9 @@ void setup() {
       // Start Secure WebSocket Client connection to Cloudflare Worker
       Serial.println("[WSS] Connecting to Cloudflare Worker...");
       
-      // --- CRITICAL SSL FIX FOR CLOUDFLARE ---
-      // Disable strict SSL certificate checks so ESP32 accepts Cloudflare certificates.
-      // NOTE: If this throws a compile error, please update the "WebSockets" library by Links2004
-      // to the latest version in the Arduino IDE Library Manager (Tools -> Manage Libraries).
-      webSocket.setInsecure();
-      
-      webSocket.beginSSL(wsHost, wsPort, wsPath);
+      // Passing the certificate fingerprint directly in beginSSL to bypass
+      // version issues on older versions of the WebSockets library.
+      webSocket.beginSSL(wsHost, wsPort, wsPath, sslFingerprint);
       webSocket.onEvent(webSocketEvent);
       lastWsReconnectAttempt = millis();
     } else {
@@ -280,10 +282,7 @@ void loop() {
       lastWsReconnectAttempt = millis();
       Serial.println("[WSS] Reconnecting to Cloudflare Worker...");
       
-      // --- CRITICAL SSL FIX FOR CLOUDFLARE ---
-      webSocket.setInsecure();
-      
-      webSocket.beginSSL(wsHost, wsPort, wsPath);
+      webSocket.beginSSL(wsHost, wsPort, wsPath, sslFingerprint);
     }
   }
 
