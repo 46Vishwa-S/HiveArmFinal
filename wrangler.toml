@@ -1,7 +1,8 @@
 name = "hivearmcontrol"
-pages_build_output_dir = "dist/client"
 compatibility_date = "2026-06-05"
 compatibility_flags = ["nodejs_compat"]
 
-[observability]
-enabled = true
+# Tell wrangler this is a static assets deployment (Cloudflare Pages)
+# This prevents wrangler deploy from requiring a Worker entry-point
+[assets]
+directory = "./dist/client"
